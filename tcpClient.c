@@ -145,6 +145,8 @@ void createFlight() {
       //scanf("%s", buffer);
       //while (getchar() != '\n');
 
+      toUpperCase(buffer);
+
       if(strcmp(buffer, "BACK") == 0) return;
 
       
@@ -185,6 +187,8 @@ void cancelFlight() {
 
       //scanf("%s", buffer);
       //while (getchar() != '\n');
+      toUpperCase(buffer);
+
       if(strcmp(buffer, "BACK") == 0) return;
 
       strcpy(message, "2");
@@ -219,6 +223,8 @@ void seeFlight() {
    //scanf("%s", buffer);
    //while (getchar() != '\n');
 
+   toUpperCase(buffer);
+
    if(strcmp(buffer, "BACK") == 0) return;
 
    showSeatsArrangement(buffer);
@@ -239,6 +245,8 @@ void bookSeat() {
          buffer[strlen (buffer) - 1] = '\0';
    //scanf("%s", buffer);
    //while (getchar() != '\n');
+
+   toUpperCase(buffer);
 
    if(strcmp(buffer, "BACK") == 0) return;
 
@@ -273,6 +281,8 @@ void cancelSeatBooking() {
          buffer[strlen (buffer) - 1] = '\0';
    //scanf("%s", buffer);
    //while (getchar() != '\n');
+
+   toUpperCase(buffer);
 
    if(strcmp(buffer, "BACK") == 0) return;
 
@@ -384,5 +394,13 @@ getint(const char message[], ... )
 
    } while (! exitFlag);
    return n;
+}
+
+void toUpperCase(char* s)
+{
+    while(*s) {
+        *s = toupper(*s);
+        s ++;
+    }
 }
 

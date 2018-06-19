@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 #include <unistd.h>
 #include <sys/socket.h>
 #include <sys/types.h>
@@ -35,7 +36,7 @@ int main(){
 
 	         option = 0;
 
-	         printf("Please enter one of these options: \n");
+	         printf("You can choose one of these options: \n");
 	         printf("1- Create a new flight \n");
 	         printf("2- Cancel an existing flight \n");
 	         printf("3- See the seating arrangement of an existing flight \n");
@@ -45,8 +46,12 @@ int main(){
 	         printf("\n");
 
 	      
-	         scanf("%d", &option);
-            while (getchar() != '\n');
+	         while(!(option >=1 && option <= 6)) {
+               option = getint("Choose your option: ");
+               if(!(option >=1 && option <= 6))
+                  printf("Incorrect number, it must be an integer between 1 and 6\n");
+            }
+            //while (getchar() != '\n');
             //while ((c = getchar()) != '\n' && c != EOF) { }
 
       	}
@@ -134,11 +139,11 @@ void createFlight() {
       printf("PLEASE WRITE THE NAME OF THE NEW FLIGHT, OR 'BACK' IF YOU WANT TO GO BACK:\n");
       memset(buffer, '\0', sizeof(buffer));
       memset(message, '\0', sizeof(message));
-      /*fgets(buffer, 1024, stdin);
+      fgets(buffer, 1024, stdin);
       if ((strlen(buffer) > 0) && (buffer[strlen (buffer) - 1] == '\n'))
-         buffer[strlen (buffer) - 1] = '\0';*/
-      scanf("%s", buffer);
-      while (getchar() != '\n');
+         buffer[strlen (buffer) - 1] = '\0';
+      //scanf("%s", buffer);
+      //while (getchar() != '\n');
 
       if(strcmp(buffer, "BACK") == 0) return;
 
@@ -174,12 +179,12 @@ void cancelFlight() {
       printf("PLEASE WRITE THE NAME OF THE FLIGHT TO CANCEL, OR 'BACK' IF YOU WANT TO GO BACK: \n");
       memset(buffer, '\0', sizeof(buffer));
       memset(message, '\0', sizeof(message));
-      /*fgets(buffer, 1024, stdin);
+      fgets(buffer, 1024, stdin);
       if ((strlen(buffer) > 0) && (buffer[strlen (buffer) - 1] == '\n'))
-         buffer[strlen (buffer) - 1] = '\0';*/
+         buffer[strlen (buffer) - 1] = '\0';
 
-      scanf("%s", buffer);
-      while (getchar() != '\n');
+      //scanf("%s", buffer);
+      //while (getchar() != '\n');
       if(strcmp(buffer, "BACK") == 0) return;
 
       strcpy(message, "2");
@@ -208,11 +213,11 @@ void seeFlight() {
 
    printf("PLEASE WRITE THE NAME OF THE FLIGHT TO SEE THE SEATING ARRANGEMENT, OR 'BACK' IF YOU WANT TO GO BACK: \n");
    memset(buffer, '\0', sizeof(buffer));
-   /*fgets(buffer, 1024, stdin);
+   fgets(buffer, 1024, stdin);
       if ((strlen(buffer) > 0) && (buffer[strlen (buffer) - 1] == '\n'))
-         buffer[strlen (buffer) - 1] = '\0';*/
-   scanf("%s", buffer);
-   while (getchar() != '\n');
+         buffer[strlen (buffer) - 1] = '\0';
+   //scanf("%s", buffer);
+   //while (getchar() != '\n');
 
    if(strcmp(buffer, "BACK") == 0) return;
 
@@ -229,11 +234,11 @@ void bookSeat() {
 
    printf("PLEASE WRITE THE NAME OF THE FLIGHT TO SEE, OR 'BACK' IF YOU WANT TO GO BACK: \n");
    memset(buffer, '\0', sizeof(buffer));
-   /*fgets(buffer, 1024, stdin);
+   fgets(buffer, 1024, stdin);
       if ((strlen(buffer) > 0) && (buffer[strlen (buffer) - 1] == '\n'))
-         buffer[strlen (buffer) - 1] = '\0';*/
-   scanf("%s", buffer);
-   while (getchar() != '\n');
+         buffer[strlen (buffer) - 1] = '\0';
+   //scanf("%s", buffer);
+   //while (getchar() != '\n');
 
    if(strcmp(buffer, "BACK") == 0) return;
 
@@ -243,9 +248,9 @@ void bookSeat() {
 
    while(!res) {
       seatNumber = 0;
-      printf("PLEASE ENTER THE NUMBER OF SEAT TO BOOK: \n");
-      scanf("%d", &seatNumber);
-      while (getchar() != '\n');
+      seatNumber = getint("PLEASE ENTER THE NUMBER OF SEAT TO BOOK: \n");
+      /*scanf("%d", &seatNumber);
+      while (getchar() != '\n');*/
 
       res = book(flight, seatNumber);
    }
@@ -263,11 +268,11 @@ void cancelSeatBooking() {
 
    printf("PLEASE WRITE THE NAME OF THE FLIGHT TO SEE, OR 'BACK' IF YOU WANT TO GO BACK: \n");
    memset(buffer, '\0', sizeof(buffer));
-   /*fgets(buffer, 1024, stdin);
+   fgets(buffer, 1024, stdin);
       if ((strlen(buffer) > 0) && (buffer[strlen (buffer) - 1] == '\n'))
-         buffer[strlen (buffer) - 1] = '\0';*/
-   scanf("%s", buffer);
-   while (getchar() != '\n');
+         buffer[strlen (buffer) - 1] = '\0';
+   //scanf("%s", buffer);
+   //while (getchar() != '\n');
 
    if(strcmp(buffer, "BACK") == 0) return;
 
@@ -277,9 +282,7 @@ void cancelSeatBooking() {
 
    while(!res) {
       seatNumber = 0;
-      printf("PLEASE ENTER THE NUMBER OF SEAT TO CANCEL THE BOOKING: \n");
-      scanf("%d", &seatNumber);
-      while (getchar() != '\n');
+      seatNumber = getint("PLEASE ENTER THE NUMBER OF SEAT TO CANCEL THE BOOKING: \n");
 
       res = cancelBooking(flight, seatNumber);
    }
@@ -347,3 +350,39 @@ int startsWith(const char *a, const char *b)
    if(strncmp(a, b, strlen(b)) == 0) return 1;
    return 0;
 }
+
+static int
+finalBuffer()
+{
+   int c;
+   int flag = 1;
+   while ( ( c= getchar()) != '\n')
+      if (! isspace(c))
+         flag = 0;
+   
+   return flag;
+}
+
+int 
+getint(const char message[], ... )
+{
+   int n, exitFlag = 0;
+   va_list ap;
+      
+   do 
+   {
+      va_start(ap, message);
+      vprintf(message, ap);
+      va_end(ap);
+
+      if ( scanf("%d",&n) != 1)
+         while (getchar() != '\n');
+      else
+         exitFlag = finalBuffer();
+      if ( !exitFlag)
+         printf("Error, that's not a number\n");
+
+   } while (! exitFlag);
+   return n;
+}
+

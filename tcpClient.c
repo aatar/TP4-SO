@@ -9,89 +9,83 @@
 #include <arpa/inet.h>
 #include "tcpClient.h"
 
-
-
 int clientSocket = 0, ret = 0, option = 0, validateOperation = 0;
 struct sockaddr_in serverAddr;
 char buffer[1024];
 char message[1024];
 char c;
 
-int main(){
-
+int main()
+{
 	memset(&serverAddr, '\0', sizeof(serverAddr));
 	bzero(buffer, sizeof(buffer));
 
 	setupClientSocket();
 
-	
-
-
 	printf("WELCOME TO THE AIRPLANE SEAT BOOKING SYSTEM!!!\n");
 
-  
-   	while(1) {
-      	option = 0;
-      	while(!(option >=1 && option <= 6)) {
+	while(1)
+	{
+		option = 0;
+		while(!(option >=1 && option <= 6))
+		{
+			option = 0;
+			printf("You can choose one of these options: \n");
+			printf("1- Create a new flight \n");
+			printf("2- Cancel an existing flight \n");
+			printf("3- See the seating arrangement of an existing flight \n");
+			printf("4- Book a seat of an existing flight \n");
+			printf("5- Cancel a booking of a seat \n");
+			printf("6- Exit \n");
+			printf("\n");
 
-	         option = 0;
 
-	         printf("You can choose one of these options: \n");
-	         printf("1- Create a new flight \n");
-	         printf("2- Cancel an existing flight \n");
-	         printf("3- See the seating arrangement of an existing flight \n");
-	         printf("4- Book a seat of an existing flight \n");
-	         printf("5- Cancel a booking of a seat \n");
-	         printf("6- Exit \n");
-	         printf("\n");
+while(!(option >=1 && option <= 6)) {
+option = getint("Choose your option: ");
+if(!(option >=1 && option <= 6))
+printf("Incorrect number, it must be an integer between 1 and 6\n");
+}
+//while (getchar() != '\n');
+//while ((c = getchar()) != '\n' && c != EOF) { }
 
-	      
-	         while(!(option >=1 && option <= 6)) {
-               option = getint("Choose your option: ");
-               if(!(option >=1 && option <= 6))
-                  printf("Incorrect number, it must be an integer between 1 and 6\n");
-            }
-            //while (getchar() != '\n');
-            //while ((c = getchar()) != '\n' && c != EOF) { }
+}
 
-      	}
-      
-      	switch(option) {
-	         case 1:
-	            createFlight();
-	         break;
-	         case 2:
-	            cancelFlight();
-	         break;
-	         case 3:
-	            seeFlight();
-	         break;
-	         case 4:
-	            bookSeat();
-	         break;
-	         case 5:
-	            cancelSeatBooking();
-	         break;
-	         break;
-	         case 6:
-	            //sqlite3_close(db);
-	         	bzero(buffer, sizeof(buffer));
-               sprintf(buffer, "exit");
-	         	send(clientSocket, buffer, strlen(buffer), 0);
-	         	close(clientSocket);
-   				printf("[-]Disconnected from server.\n");
-   				exit(1);
-	         break;
-      	}
-   	}
+switch(option) {
+case 1:
+createFlight();
+break;
+case 2:
+cancelFlight();
+break;
+case 3:
+seeFlight();
+break;
+case 4:
+bookSeat();
+break;
+case 5:
+cancelSeatBooking();
+break;
+break;
+case 6:
+//sqlite3_close(db);
+bzero(buffer, sizeof(buffer));
+sprintf(buffer, "exit");
+send(clientSocket, buffer, strlen(buffer), 0);
+close(clientSocket);
+printf("[-]Disconnected from server.\n");
+exit(1);
+break;
+}
+}
 
 	/*while(1){
-		
+
 		printf("Client: \t");
 		fgets(buffer, 1024, stdin);
 		if ((strlen(buffer) > 0) && (buffer[strlen (buffer) - 1] == '\n'))
         	buffer[strlen (buffer) - 1] = '\0';
-        
+
         send(clientSocket, buffer, strlen(buffer), 0);
 
 		if(strcmp(buffer, ":exit") == 0){
@@ -149,7 +143,7 @@ void createFlight() {
 
       if(strcmp(buffer, "BACK") == 0) return;
 
-      
+
       strcpy(message, "1");
       strcat(message, buffer);
       send(clientSocket, message, strlen(message), 0);
@@ -167,7 +161,7 @@ void createFlight() {
             printf("SORRY, THE FLIGHT YOU WROTE ALREADY EXISTS, PLEASE TRY WITH ANOTHER ONE\n");
          }
       }
-      
+
    } while(!validateOperation);
 }
 
@@ -335,7 +329,7 @@ int changeSeatsArrangement(char * flight, int seatNumber, int hasToBook) {
    bzero(message, sizeof(message));
    if(hasToBook) sprintf(message, "4%d%s", seatNumber, flight);
    else sprintf(message, "5%d%s", seatNumber, flight);
-   
+
    send(clientSocket, message, strlen(message), 0);
    if(recv(clientSocket, message, 1024, 0) < 0){
       printf("[-]Error in receiving data.\n");
@@ -369,17 +363,17 @@ finalBuffer()
    while ( ( c= getchar()) != '\n')
       if (! isspace(c))
          flag = 0;
-   
+
    return flag;
 }
 
-int 
+int
 getint(const char message[], ... )
 {
    int n, exitFlag = 0;
    va_list ap;
-      
-   do 
+
+   do
    {
       va_start(ap, message);
       vprintf(message, ap);
@@ -403,4 +397,3 @@ void toUpperCase(char* s)
         s ++;
     }
 }
-

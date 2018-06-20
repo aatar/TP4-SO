@@ -24,12 +24,12 @@ int main(){
 
 	setupClientSocket();
 
-
+	
 
 
 	printf("WELCOME TO THE AIRPLANE SEAT BOOKING SYSTEM!!!\n");
 
-
+  
    	while(1) {
       	option = 0;
       	while(!(option >=1 && option <= 6)) {
@@ -45,7 +45,7 @@ int main(){
 	         printf("6- Exit \n");
 	         printf("\n");
 
-
+	      
 	         while(!(option >=1 && option <= 6)) {
                option = getint("Choose your option: ");
                if(!(option >=1 && option <= 6))
@@ -55,7 +55,7 @@ int main(){
             //while ((c = getchar()) != '\n' && c != EOF) { }
 
       	}
-
+      
       	switch(option) {
 	         case 1:
 	            createFlight();
@@ -86,12 +86,12 @@ int main(){
    	}
 
 	/*while(1){
-
+		
 		printf("Client: \t");
 		fgets(buffer, 1024, stdin);
 		if ((strlen(buffer) > 0) && (buffer[strlen (buffer) - 1] == '\n'))
         	buffer[strlen (buffer) - 1] = '\0';
-
+        
         send(clientSocket, buffer, strlen(buffer), 0);
 
 		if(strcmp(buffer, ":exit") == 0){
@@ -149,7 +149,7 @@ void createFlight() {
 
       if(strcmp(buffer, "BACK") == 0) return;
 
-
+      
       strcpy(message, "1");
       strcat(message, buffer);
       send(clientSocket, message, strlen(message), 0);
@@ -167,7 +167,7 @@ void createFlight() {
             printf("SORRY, THE FLIGHT YOU WROTE ALREADY EXISTS, PLEASE TRY WITH ANOTHER ONE\n");
          }
       }
-
+      
    } while(!validateOperation);
 }
 
@@ -335,7 +335,7 @@ int changeSeatsArrangement(char * flight, int seatNumber, int hasToBook) {
    bzero(message, sizeof(message));
    if(hasToBook) sprintf(message, "4%d%s", seatNumber, flight);
    else sprintf(message, "5%d%s", seatNumber, flight);
-
+   
    send(clientSocket, message, strlen(message), 0);
    if(recv(clientSocket, message, 1024, 0) < 0){
       printf("[-]Error in receiving data.\n");
@@ -369,17 +369,17 @@ finalBuffer()
    while ( ( c= getchar()) != '\n')
       if (! isspace(c))
          flag = 0;
-
+   
    return flag;
 }
 
-int
+int 
 getint(const char message[], ... )
 {
    int n, exitFlag = 0;
    va_list ap;
-
-   do
+      
+   do 
    {
       va_start(ap, message);
       vprintf(message, ap);
@@ -403,3 +403,4 @@ void toUpperCase(char* s)
         s ++;
     }
 }
+

@@ -4,7 +4,7 @@
 #define TCPCLIENT_H
 
 
-#define PORT 4443
+#define PORT 4447
 #define bzero(b,len) (memset((b), '\0', (len)), (void) 0)
 
 

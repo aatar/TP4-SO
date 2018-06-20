@@ -7,26 +7,27 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <sys/wait.h>
-#include <sqlite3.h> 
+#include <sqlite3.h>
 #include "tcpServer.h"
 
 
 sqlite3 *db;
 char *zErrMsg = 0;
 int rc;
-char sql[1024];
-char buffer[1024];
-char ans[1024];
-int validateOperation = 0;
+char sql[1024]; //saves the query to the database
+char buffer[1024]; //buffer that receives clients messages
+char ans[1024]; //server's answer
+int validateOperation = 0; //saves if the operation is valid or not
 int serverSocket = 0, ret = 0, currentConnections = 0;
-struct sockaddr_in serverAddr;
+struct sockaddr_in serverAddr; //address of the server
+int optval; /* flag value for setsockopt */
 
-int newSocket;
-struct sockaddr_in newAddr;
+int childSocket; //child socket for each client connection
+struct sockaddr_in clientAddr; //new address for each client connection
 
-socklen_t addr_size;
+socklen_t client_addr_size; //size of the address
 
-pid_t childpids[MAX_CONNECTIONS];
+pid_t childpids[MAX_CONNECTIONS]; //pids of childs
 int status[MAX_CONNECTIONS];
 
 static int callback(void *NotUsed, int argc, char **argv, char **azColName) {
@@ -87,54 +88,53 @@ int main(){
 	setupServerSocket();
 
 	if(!openDatabase()) return 0;
-	
-	
-	
+
+
 	while(1){
-		newSocket = accept(serverSocket, (struct sockaddr*)&newAddr, &addr_size);
-		
-		if(newSocket < 0){
+		childSocket = accept(serverSocket, (struct sockaddr*)&clientAddr, &client_addr_size);
+
+		if(childSocket < 0){
 			exit(1);
 		}
-		
+
 		else if(currentConnections < MAX_CONNECTIONS) {
 			currentConnections++;
 
-			
-			printf("Connection accepted from %s:%d\n", inet_ntoa(newAddr.sin_addr), ntohs(newAddr.sin_port));
+
+			printf("Connection accepted from %s:%d\n", inet_ntoa(clientAddr.sin_addr), ntohs(clientAddr.sin_port));
 
 			if((childpids[currentConnections-1] = fork()) == 0){
-				close(serverSocket);
+				//close(serverSocket);
 
 				while(1){
-					recv(newSocket, buffer, 1024, 0);
+					recv(childSocket, buffer, 1024, 0);
 					if(strcmp(buffer, "exit") == 0){
-						printf("Disconnected from %s:%d\n", inet_ntoa(newAddr.sin_addr), ntohs(newAddr.sin_port));
-						close(newSocket);
+						printf("Disconnected from %s:%d\n", inet_ntoa(clientAddr.sin_addr), ntohs(clientAddr.sin_port));
+						close(childSocket);
 						exit(0);
 					}
 					else if(startsWith(buffer, "1")) {
 						removeFirst(buffer);
-						
+
 
 						if(createFlight(buffer)) {
 							printf("Client %d created flight '%s'!!!\n", currentConnections, buffer);
 							//printf("A client created a flight\n");
 							memset(ans, '\0', sizeof(ans));
 							sprintf(ans, "ok");
-							
+
 						}
 						else {
 							memset(ans, '\0', sizeof(ans));
 							sprintf(ans, "error");
 						}
-						send(newSocket, ans, strlen(ans), 0);
+						send(childSocket, ans, strlen(ans), 0);
 						memset(ans, '\0', sizeof(ans));
-							
+
 					}
 					else if(startsWith(buffer, "2")) {
 						removeFirst(buffer);
-						
+
 
 						if(cancelFlight(buffer)) {
 							printf("Client %d cancelled flight '%s'!!!\n", currentConnections, buffer);
@@ -145,9 +145,9 @@ int main(){
 							memset(ans, '\0', sizeof(ans));
 							sprintf(ans, "error");
 						}
-						send(newSocket, ans, strlen(ans), 0);
+						send(childSocket, ans, strlen(ans), 0);
 						memset(ans, '\0', sizeof(ans));
-							
+
 					}
 					else if(startsWith(buffer, "3")) {
 						removeFirst(buffer);
@@ -161,18 +161,18 @@ int main(){
 
 					   	/* Execute SQL statement */
 					   	rc = sqlite3_exec(db, sql, callbackSeats, 0, &zErrMsg);
-					   
+
 					   	if( rc != SQLITE_OK ){
 					   	   fprintf(stderr, "SQL error: %s\n", zErrMsg);
 					   	   sqlite3_free(zErrMsg);
 					   	}
 					   	else {
-					    	send(newSocket, buffer, strlen(buffer), 0);
+					    	send(childSocket, buffer, strlen(buffer), 0);
 							memset(buffer, '\0', sizeof(buffer));
-							printf("Client %d saw the seats arrangements for the flight '%s'!!!:\n", currentConnections, flight);
+							//printf("Client %d saw the seats arrangements for the flight '%s'!!!:\n", currentConnections, flight);
 					    }
-						
-							
+
+
 					}
 					else if(startsWith(buffer, "4") || startsWith(buffer, "5")) {
 						int hasToBook = startsWith(buffer, "4");
@@ -209,13 +209,13 @@ int main(){
 						   	else {
 						   		if(validateOperation) {
 								      memset(sql, '\0', sizeof(sql));
-								   
+
 								      if(hasToBook) sprintf(sql, "UPDATE FLIGHT SET SEAT%d='Occupied' WHERE NAME='%s';", seatNumber, flight);
 								      else sprintf(sql, "UPDATE FLIGHT SET SEAT%d='Free' WHERE NAME='%s';", seatNumber, flight);
-								      
+
 								      /* Execute SQL statement */
 								      rc = sqlite3_exec(db, sql, callback, 0, &zErrMsg);
-								      
+
 								      if( rc != SQLITE_OK ){
 								         fprintf(stderr, "SQL error: %s\n", zErrMsg);
 								         sqlite3_free(zErrMsg);
@@ -232,13 +232,13 @@ int main(){
 								}
 						   	}
 						}
-						
-						send(newSocket, ans, strlen(ans), 0);
+
+						send(childSocket, ans, strlen(ans), 0);
 						memset(ans, '\0', sizeof(ans));
-						
-							
+
+
 					}
-					
+
 					else if(startsWith(buffer, "6")) {
 						memset(buffer, '\0', sizeof(buffer));
 						strcpy(buffer, "THESE ARE THE EXISTING FLIGHTS:\n");
@@ -247,20 +247,20 @@ int main(){
 
 					    /* Execute SQL statement */
 					    rc = sqlite3_exec(db, sql, callbackFlights, 0, &zErrMsg);
-					   
+
 					    if( rc != SQLITE_OK ){
 					       fprintf(stderr, "SQL error: %s\n", zErrMsg);
 					       sqlite3_free(zErrMsg);
 					    }
 					    else {
-					    	send(newSocket, buffer, strlen(buffer), 0);
+					    	send(childSocket, buffer, strlen(buffer), 0);
 							memset(buffer, '\0', sizeof(buffer));
 					    }
 					}
-					
+
 					/*else{
 						printf("Client %d: %s\n", currentConnections, buffer);
-						send(newSocket, buffer, strlen(buffer), 0);
+						send(childSocket, buffer, strlen(buffer), 0);
 						bzero(buffer, sizeof(buffer));
 					}*/
 				}
@@ -273,12 +273,12 @@ int main(){
 
 	}
 
-	for(int j = 0; j < MAX_CONNECTIONS; j++)
+	for(int j = 0; j < currentConnections; j++)
 	{
 		waitpid(childpids[j], &(status[j]), 0);
 	}
 
-	close(newSocket);
+	//close(childSocket);
 	close(serverSocket);
 	sqlite3_close(db);
 
@@ -286,7 +286,10 @@ int main(){
 }
 
 void setupServerSocket() {
-	
+
+	/* 
+    * socket: create the server socket 
+    */
 	serverSocket = socket(AF_INET, SOCK_STREAM, 0);
 	if(serverSocket < 0){
 		printf("[-]Error in connection.\n");
@@ -294,11 +297,23 @@ void setupServerSocket() {
 	}
 	printf("[+]Server Socket is created.\n");
 
-	
-	serverAddr.sin_family = AF_INET;
-	serverAddr.sin_port = htons(PORT);
+	/* setsockopt: Handy debugging trick that lets
+   * us rerun the server immediately after we kill it;
+   * otherwise we have to wait about 20 secs.
+   * Eliminates "ERROR on binding: Address already in use" error.
+   */
+   optval = 1;
+   setsockopt(serverSocket, SOL_SOCKET, SO_REUSEADDR,
+	     (const void *)&optval , sizeof(int));
+
+
+	serverAddr.sin_family = AF_INET; /* this is an Internet address */
+	serverAddr.sin_port = htons(PORT); /* port */
 	serverAddr.sin_addr.s_addr = inet_addr("127.0.0.1");
 
+	/* 
+	* bind: associate the server socket with a port 
+	*/
 	ret = bind(serverSocket, (struct sockaddr*)&serverAddr, sizeof(serverAddr));
 	if(ret < 0){
 		printf("[-]Error in binding.\n");
@@ -306,7 +321,10 @@ void setupServerSocket() {
 	}
 	printf("[+]Bind to port %d\n", PORT);
 
-	if(listen(serverSocket, MAX_CONNECTIONS) == 0){
+	/* 
+    * listen: make this socket ready to accept connection requests 
+    */
+	if(listen(serverSocket, MAX_CONNECTIONS) == 0){ ///* allow MAX_CONNECTIONS requests to queue up */ 
 		printf("[+]Listening....\n");
 	}else{
 		printf("[-]Error in binding.\n");
@@ -316,7 +334,7 @@ void setupServerSocket() {
 int openDatabase() {
 	/* Open database */
    rc = sqlite3_open("flights.db", &db);
-   
+
    if( rc ) {
       fprintf(stderr, "Can't open database: %s\n", sqlite3_errmsg(db));
       return 0;
@@ -356,10 +374,10 @@ int createFlight(char * name) {
 
 	     memset(sql, '\0', sizeof(sql));
 	     sprintf(sql, "INSERT INTO FLIGHT VALUES ('%s', 'Free', 'Free', 'Free', 'Free', 'Free');", name);
-	     
+
 	     /* Execute SQL statement */
 	     rc = sqlite3_exec(db, sql, callback, 0, &zErrMsg);
-	     
+
 	     if( rc != SQLITE_OK ){
 	        fprintf(stderr, "SQL error: %s\n", zErrMsg);
 	        sqlite3_free(zErrMsg);
@@ -391,10 +409,10 @@ int cancelFlight(char * name) {
 
 	     memset(sql, '\0', sizeof(sql));
 	     sprintf(sql, "DELETE FROM FLIGHT WHERE NAME='%s';", name);
-	     
+
 	     /* Execute SQL statement */
 	     rc = sqlite3_exec(db, sql, callback, 0, &zErrMsg);
-	     
+
 	     if( rc != SQLITE_OK ){
 	        fprintf(stderr, "SQL error: %s\n", zErrMsg);
 	        sqlite3_free(zErrMsg);

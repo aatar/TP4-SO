@@ -31,24 +31,39 @@ int clientSocket = 0;
 int serverSocket = 0;
 int errorClient = 0;
 int errorServer = 0;
+int clientConnection = 0;
+int serverConnection = 0;
+
+
 struct sockaddr_in serverAddr;
 
 void runTest()
 {
+  printf("Test Connection with Server\n", );
+  testConectionWithServer();
+
   printf("Test Cli Request: \n");
   testCliRequest();
 
 
 }
 
-void testCliRequest()
+void testConectionWithServer()
 {
   givenASocket();
   givenServerAddr();
 
   whenEstablishedARequest();
   thenCheckResponse();
+
+  whenConectClientServer();
+  thenCheckConnection();
+
+  whenBindConnectionServerClient();
+  thenCheckBinding();
+
 }
+
 
 void givenSockets()
 {
@@ -86,7 +101,6 @@ int verifySocket(int socket)
   return 0;
 }
 
-
 void thenCheckResponse()
 {
   if (errorClient == 1 || errorServer == 1) {
@@ -97,6 +111,33 @@ void thenCheckResponse()
 
   }
 }
+
+void whenConectClientServer()
+{
+  clientConnection = connect(clientSocket, (struct sockaddr*)&serverAddr, sizeof(serverAddr));
+}
+
+void thenCheckConnection()
+{
+  if (clientConnection < 0)
+  {
+    fail("Error in connection from client");
+  }
+}
+
+void whenBindConnectionServerClient()
+{
+  serverConnection = bind(serverSocket, (struct sockaddr *)&serverAddr, sizeof(serverAddr));
+}
+
+void thenCheckBinding()
+{
+  if (serverConnection < 0 )
+  {
+    fail("Error in binding connection");
+  }
+}
+
 
 
 void ok()
@@ -109,6 +150,11 @@ void fail(char * withError)
 	putchar('\n');
 	fprintf(stderr, "%s", withError);
   putchar('\n');
+}
+
+void testCliRequest()
+{
+
 }
 
 void flightReserveTest()

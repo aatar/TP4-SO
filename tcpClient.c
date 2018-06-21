@@ -45,8 +45,6 @@ int main()
 				if(!(option >=1 && option <= 6))
 					printf("Incorrect number, it must be an integer between 1 and 6\n");
 			}
-//while (getchar() != '\n');
-//while ((c = getchar()) != '\n' && c != EOF) { }
 		}
 
 		switch(option)
@@ -77,29 +75,6 @@ int main()
 			break;
 		}
 	}
-
-	/*while(1){
-
-	   printf("Client: \t");
-	   fgets(buffer, 1024, stdin);
-	   if ((strlen(buffer) > 0) && (buffer[strlen (buffer) - 1] == '\n'))
-	        buffer[strlen (buffer) - 1] = '\0';
-
-	       send(clientSocket, buffer, strlen(buffer), 0);
-
-	   if(strcmp(buffer, ":exit") == 0){
-	   close(clientSocket);
-	   printf("[-]Disconnected from server.\n");
-	   exit(1);
-	   }
-
-	   if(recv(clientSocket, buffer, 1024, 0) < 0){
-	   printf("[-]Error in receiving data.\n");
-	   }else{
-	   printf("Server: \t%s\n", buffer);
-	   }
-	   }*/
-
 	return 0;
 }
 
@@ -139,8 +114,6 @@ void createFlight()
 		fgets(buffer, 1024, stdin);
 		if ((strlen(buffer) > 0) && (buffer[strlen (buffer) - 1] == '\n'))
 			buffer[strlen (buffer) - 1] = '\0';
-		//scanf("%s", buffer);
-		//while (getchar() != '\n');
 
 		toUpperCase(buffer);
 
@@ -188,9 +161,6 @@ void cancelFlight()
 		if ((strlen(buffer) > 0) && (buffer[strlen (buffer) - 1] == '\n'))
 			buffer[strlen (buffer) - 1] = '\0';
 
-		//scanf("%s", buffer);
-		//while (getchar() != '\n');
-
 		toUpperCase(buffer);
 
 		if(strcmp(buffer, "BACK") == 0) return;
@@ -232,8 +202,6 @@ void seeFlight()
 
 	if ((strlen(buffer) > 0) && (buffer[strlen (buffer) - 1] == '\n'))
 		buffer[strlen (buffer) - 1] = '\0';
-	//scanf("%s", buffer);
-	//while (getchar() != '\n');
 
 	toUpperCase(buffer);
 
@@ -257,9 +225,6 @@ void bookSeat()
 	if ((strlen(buffer) > 0) && (buffer[strlen (buffer) - 1] == '\n'))
 		buffer[strlen (buffer) - 1] = '\0';
 
-	//scanf("%s", buffer);
-	//while (getchar() != '\n');
-
 	toUpperCase(buffer);
 
 	if(strcmp(buffer, "BACK") == 0)
@@ -273,9 +238,6 @@ void bookSeat()
 	{
 		seatNumber = 0;
 		seatNumber = getint("PLEASE ENTER THE NUMBER OF SEAT TO BOOK: \n");
-
-		/*scanf("%d", &seatNumber);
-		   while (getchar() != '\n');*/
 
 		res = book(flight, seatNumber);
 	}
@@ -297,8 +259,7 @@ void cancelSeatBooking()
 	fgets(buffer, 1024, stdin);
 	if ((strlen(buffer) > 0) && (buffer[strlen (buffer) - 1] == '\n'))
 		buffer[strlen (buffer) - 1] = '\0';
-	//scanf("%s", buffer);
-	//while (getchar() != '\n');
+
 	toUpperCase(buffer);
 
 	if(strcmp(buffer, "BACK") == 0)

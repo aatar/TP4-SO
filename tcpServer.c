@@ -442,8 +442,8 @@ int cancelFlight(char * name)
 
   if(validateOperation)
   {
-    // memset(sql, '\0', sizeof(sql));
-    // sprintf(sql, "DELETE FROM FLIGHT WHERE NAME='%s';", name);
+    memset(sql, '\0', sizeof(sql));
+    sprintf(sql, "DELETE FROM FLIGHT WHERE NAME='%s';", name);
 
     /* Execute SQL statement */
     rc = sqlite3_exec(db, sql, callback, 0, &zErrMsg);

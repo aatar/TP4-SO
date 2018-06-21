@@ -23,7 +23,7 @@
 #include <sys/wait.h>
 #include <sqlite3.h>
 
-//#define PORT 4445
+#define PORT 8080
 //#define MAX_CONNECTIONS 50
 
 
@@ -31,44 +31,51 @@ int clientSocket = 0;
 int serverSocket = 0;
 int errorClient = 0;
 int errorServer = 0;
-int clientConnection = 0;
-int serverConnection = 0;
-
-
+int generalError = 0;
+int clientConnection = -1;
+int serverConnection = -1;
 struct sockaddr_in serverAddr;
+
+sqlite3 *db;
+int rc;
+
+int main()
+{
+  runTest();
+}
 
 void runTest()
 {
-  printf("Test Connection with Server\n", );
+  printf("Test Connection with Server : \n", );
   testConectionWithServer();
 
   printf("Test Cli Request: \n");
-  testCliRequest();
-
+  if (generalError != 0)
+    // testCliRequest();
+  else
+    fail("Failed on connection");
 
 }
 
 void testConectionWithServer()
 {
-  givenASocket();
+  givenSockets();
   givenServerAddr();
-
-  whenEstablishedARequest();
-  thenCheckResponse();
 
   whenConectClientServer();
   thenCheckConnection();
 
   whenBindConnectionServerClient();
   thenCheckBinding();
-
 }
 
 
 void givenSockets()
 {
   clientSocket = socket(AF_INET,SOCK_STREAM,0);
+  errorClient = verifySocket(clientSocket);
   serverSocket = socket(AF_INET,SOCK_STREAM,0);
+  errorServer = verifySocket(serverSocket);
   errorClient = 0;
   errorServer = 0;
 }
@@ -80,81 +87,75 @@ void givenServerAddr()
 	serverAddr.sin_addr.s_addr = inet_addr("127.0.0.1");
 }
 
-void whenEstablishedARequest()
-{
-  errorClient = verifySocket(clientSocket);
-  errorServer = verifySocket(serverSocket);
-
-  if(errorClient == 0 && erroServer == 0)
-  {
-
-  }
-}
-
-int verifySocket(int socket)
-{
-  if (socket < 0)
-  {
-    return 1;
-
-  }
-  return 0;
-}
-
-void thenCheckResponse()
-{
-  if (errorClient == 1 || errorServer == 1) {
-    fail("Unable to create the socket");
-  }
-  else
-  {
-
-  }
-}
-
 void whenConectClientServer()
 {
-  clientConnection = connect(clientSocket, (struct sockaddr*)&serverAddr, sizeof(serverAddr));
+  if (verifySocket(clientSocket))
+  {
+    clientConnection = connect(clientSocket, (struct sockaddr*)&serverAddr, sizeof(serverAddr));
+  }
 }
 
 void thenCheckConnection()
 {
   if (clientConnection < 0)
   {
+    generalError = 1;
     fail("Error in connection from client");
+    return;
   }
+  ok("Connection success.");
 }
 
 void whenBindConnectionServerClient()
 {
-  serverConnection = bind(serverSocket, (struct sockaddr *)&serverAddr, sizeof(serverAddr));
+  if (verifySocket(serverSocket))
+  {
+    serverConnection = bind(serverSocket, (struct sockaddr *)&serverAddr, sizeof(serverAddr));
+  }
+
 }
 
 void thenCheckBinding()
 {
   if (serverConnection < 0 )
   {
+    generalError = 1;
     fail("Error in binding connection");
+    return;
   }
-}
-
-
-
-void ok()
-{
-	printf("	Ok!\n");
-}
-
-void fail(char * withError)
-{
-	putchar('\n');
-	fprintf(stderr, "%s", withError);
-  putchar('\n');
+  ok("Binding success.");
 }
 
 void testCliRequest()
 {
+  givenADB();
+  whenEstablishedARequest();
+  thenCheckResponse();
+}
 
+void givenADB()
+{
+  rc = sqlite3_open("flights.db", &db);
+}
+
+void whenEstablishedARequest()
+{
+  if(errorClient == 0 && erroServer == 0 && !rc)
+  {
+
+  }
+}
+
+void thenCheckResponse()
+{
+  if (errorClient == 1 || errorServer == 1 || rc) {
+    generalError = 1;
+    fail("Unable to create the request.");
+  }
+  else
+  {
+
+  }
 }
 
 void flightReserveTest()
@@ -175,4 +176,27 @@ void flightCreationTest()
 void flightDeletionTest()
 {
 
+}
+
+
+int verifySocket(int socket)
+{
+  if (socket < 0)
+  {
+    return 1;
+
+  }
+  return 0;
+}
+
+void ok(char * msg)
+{
+	printf("	Ok! %s\n", msg);
+}
+
+void fail(char * withError)
+{
+	putchar('\n');
+	fprintf(stderr, "%s", withError);
+  putchar('\n');
 }

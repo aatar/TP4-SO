@@ -46,8 +46,6 @@ int main()
 				if(!(option >=1 && option <= 6))
 					printf("Incorrect number, it must be an integer between 1 and 6\n");
 			}
-//while (getchar() != '\n');
-//while ((c = getchar()) != '\n' && c != EOF) { }
 		}
 
 		switch(option)
@@ -68,7 +66,6 @@ int main()
 			cancelSeatBooking();
 			break;
 		case 6:
-//sqlite3_close(db);
 			bzero(buffer, sizeof(buffer));
 			sprintf(buffer, "exit");
 			send(clientSocket, buffer, strlen(buffer), 0);
@@ -78,6 +75,7 @@ int main()
 			break;
 		}
 	}
+
 	return 0;
 }
 
@@ -117,7 +115,7 @@ void createFlight()
 		fgets(buffer, 1024, stdin);
 		if ((strlen(buffer) > 0) && (buffer[strlen (buffer) - 1] == '\n'))
 			buffer[strlen (buffer) - 1] = '\0';
-
+		
 		toUpperCase(buffer);
 
 		if(strcmp(buffer, "BACK") == 0) return;
@@ -202,7 +200,7 @@ void seeFlight()
 
 	if(strcmp(buffer, "BACK") == 0)
 			return;
-
+	
 	showSeatsArrangement(buffer);
 }
 
@@ -222,7 +220,7 @@ void bookSeat()
 	strcpy(flight, buffer);
 
 	int arrangement;
-
+	
 	arrangement = showSeatsArrangement(flight);
 
 	if(arrangement == ALL_OCCUPIED)
@@ -238,7 +236,7 @@ void bookSeat()
 
 		showSeatsArrangement(flight);
 	}
-
+	
 }
 
 void cancelSeatBooking()
@@ -257,7 +255,7 @@ void cancelSeatBooking()
 	strcpy(flight, buffer);
 
 	int arrangement;
-
+	
 	arrangement = showSeatsArrangement(flight);
 
 	if(arrangement == ALL_FREE)
@@ -267,11 +265,12 @@ void cancelSeatBooking()
 		{
 			seatNumber = 0;
 			seatNumber = getint("PLEASE ENTER THE NUMBER OF SEAT TO CANCEL THE BOOKING: \n");
+
 			res = cancelBooking(flight, seatNumber);
 		}
 		showSeatsArrangement(flight);
 	}
-
+	
 }
 
 void showExistingFlights()
@@ -303,7 +302,7 @@ int showSeatsArrangement(char * flight)
 		printf("%s\n", message);
 	}
 
-
+	
 	bzero(messageAux, sizeof(messageAux));
 
 	sprintf(messageAux, "SEATS ARRANGEMENT FOR THE FLIGHT '%s':\n", flight);
@@ -329,7 +328,7 @@ int showSeatsArrangement(char * flight)
 	if(strcmp(messageAux, message) == 0) return ALL_FREE;
 
 	return 0;
-
+  	
 }
 
 int book(char * flight, int seatNumber)
@@ -431,7 +430,7 @@ void selectFlight() {
 
 		if ((strlen(buffer) > 0) && (buffer[strlen (buffer) - 1] == '\n'))
 			buffer[strlen (buffer) - 1] = '\0';
-	
+		
 		toUpperCase(buffer);
 
 		if(strcmp(buffer, "BACK") == 0)

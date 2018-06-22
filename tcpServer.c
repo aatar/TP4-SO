@@ -9,6 +9,7 @@
 #include <sys/wait.h>
 #include <sqlite3.h>
 #include "tcpServer.h"
+#include "serverLocation.h"
 
 
 sqlite3 *db; // Database reference
@@ -348,8 +349,8 @@ void setupServerSocket()
   setsockopt(serverSocket, SOL_SOCKET, SO_REUSEADDR,(const void *)&optval, sizeof(int));
 
   serverAddr.sin_family = AF_INET; /* this is an Internet address */
-  serverAddr.sin_port = htons(PORT); /* port */
-  serverAddr.sin_addr.s_addr = inet_addr("127.0.0.1");
+  serverAddr.sin_port = htons(SERVER_PORT); /* port */
+  serverAddr.sin_addr.s_addr = inet_addr(SERVER_ADDR);
 
   /*
    * bind: associate the server socket with a port
@@ -360,7 +361,7 @@ void setupServerSocket()
     printf("[-]Error in binding.\n");
     exit(1);
   }
-  printf("[+]Bind to port %d\n", PORT);
+  printf("[+]Bind to port %d\n", SERVER_PORT);
 
   /*
    * listen: make this socket ready to accept connection requests

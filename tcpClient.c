@@ -8,6 +8,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include "tcpClient.h"
+#include "serverLocation.h"
 
 int clientSocket = 0, ret = 0, option = 0, validateOperation = 0;
 struct sockaddr_in serverAddr;
@@ -31,15 +32,8 @@ int main()
 		while(!(option >=1 && option <= 6))
 		{
 			option = 0;
-			printf("You can choose one of these options: \n");
-			printf("1- Create a new flight \n");
-			printf("2- Cancel an existing flight \n");
-			printf("3- See the seating arrangement of an existing flight \n");
-			printf("4- Book a seat of an existing flight \n");
-			printf("5- Cancel a booking of a seat \n");
-			printf("6- Exit \n");
-			printf("\n");
-
+			printMenu();
+			
 			while(!(option >=1 && option <= 6))
 			{
 				option = getint("Choose your option: ");
@@ -90,8 +84,8 @@ void setupClientSocket()
 	printf("[+]Client Socket is created.\n");
 
 	serverAddr.sin_family = AF_INET;
-	serverAddr.sin_port = htons(PORT);
-	serverAddr.sin_addr.s_addr = inet_addr("127.0.0.1");
+	serverAddr.sin_port = htons(SERVER_PORT);
+	serverAddr.sin_addr.s_addr = inet_addr(SERVER_ADDR);
 
 	ret = connect(clientSocket, (struct sockaddr*)&serverAddr, sizeof(serverAddr));
 	if(ret < 0)
@@ -459,4 +453,15 @@ void selectFlight() {
 			}
 		}
 	}
+}
+
+void printMenu() {
+	printf("You can choose one of these options: \n");
+	printf("1- Create a new flight \n");
+	printf("2- Cancel an existing flight \n");
+	printf("3- See the seating arrangement of an existing flight \n");
+	printf("4- Book a seat of an existing flight \n");
+	printf("5- Cancel a booking of a seat \n");
+	printf("6- Exit \n");
+	printf("\n");
 }

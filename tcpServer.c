@@ -140,7 +140,7 @@ int main()
       if((childpids[clientConnections-1] = fork()) == 0)
       {
         close(serverSocket);
-        signal(SIGINT, sig_handler_child); //Doesn't apply the handler created for SIGINT
+        signal(SIGINT, sig_handler_child);
 
         while(1)
         {

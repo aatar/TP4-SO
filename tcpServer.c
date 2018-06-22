@@ -344,11 +344,6 @@ int main()
     }
   }
 
-  /*for(int j = 0; j < clientConnections; j++)
-  {
-	waitpid(childpids[j], &(status[j]), 0);
-  }*/
-
   close(childSocket);
   close(serverSocket);
   sqlite3_close(db);
@@ -515,11 +510,7 @@ void sig_handler(int signo)
 {
   	if (signo == SIGINT){
    		
-   		/*for(int j = 0; j < clientConnections; j++)
-		{
-			waitpid(childpids[j], &(status[j]), 0);
-		}*/
-		for(int j = 0; j < clientConnections; j++)
+   		for(int j = 0; j < clientConnections; j++)
 		{
 			pthread_join(tids[j], NULL);
 		}

@@ -13,5 +13,6 @@ void removeFirst(char * s);
 int flightExists(char * name);
 void sig_handler(int signo);
 void sig_handler_child(int signo);
+void* wait_child(void* arg);
 
 #endif

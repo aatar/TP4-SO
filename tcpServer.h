@@ -11,5 +11,7 @@ int createFlight(char * name);
 int cancelFlight(char * name);
 void removeFirst(char * s);
 int flightExists(char * name);
+void sig_handler(int signo);
+void sig_handler_child(int signo);
 
 #endif

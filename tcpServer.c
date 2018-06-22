@@ -8,6 +8,8 @@
 #include <arpa/inet.h>
 #include <sys/wait.h>
 #include <sqlite3.h>
+#include <signal.h>
+#include <pthread.h>
 #include "tcpServer.h"
 #include "serverLocation.h"
 
@@ -19,7 +21,9 @@ char sql[1024]; //saves the query to the database
 char buffer[1024]; //buffer that receives clients messages
 char ans[1024]; //server's answer
 int validateOperation = 0; //saves if the operation is valid or not
-int serverSocket = 0, ret = 0, currentConnections = 0;
+int serverSocket = 0; //socket fd of server
+int ret = 0;
+int clientConnections = 0; //counts the total of connections
 struct sockaddr_in serverAddr; //address of the server
 int optval; /* flag value for setsockopt */
 
@@ -31,6 +35,18 @@ socklen_t client_addr_size; //size of the address
 pid_t childpids[MAX_CONNECTIONS]; //pids of childs
 int status[MAX_CONNECTIONS]; // child's status
 
+pthread_t tids[MAX_CONNECTIONS]; //Threads IDs to wait for child processes
+
+void* wait_child(void* arg)
+{
+	int *childNumber_ptr = (int*) arg;
+	int childNumber = *childNumber_ptr;
+	childNumber --;
+
+	waitpid(childpids[childNumber], &(status[childNumber]), 0);
+
+	pthread_exit(0);
+}
 
 static int callback(void *NotUsed, int argc, char **argv, char **azColName)
 {
@@ -94,6 +110,9 @@ static int checkIfExists(void *NotUsed, int argc, char **argv, char **azColName)
 
 int main()
 {
+  if (signal(SIGINT, sig_handler) == SIG_ERR)
+  	printf("\nCan't catch SIGINT\n");
+
   memset(&serverAddr, '\0', sizeof(serverAddr));
   bzero(buffer, sizeof(buffer));
 
@@ -110,16 +129,19 @@ int main()
     childSocket = accept(serverSocket, (struct sockaddr*)&clientAddr, &client_addr_size);
     if(childSocket < 0)
     {
-      exit(1);
+      printf("[-]Error while waiting for a connection request.\n");
+      exit(0);
     }
-    else if(currentConnections < MAX_CONNECTIONS)
+    else if(clientConnections < MAX_CONNECTIONS)
     {
-      currentConnections++;
+      clientConnections++;
       printf("Connection accepted from %s:%d\n", inet_ntoa(clientAddr.sin_addr), ntohs(clientAddr.sin_port));
 
-      if((childpids[currentConnections-1] = fork()) == 0)
+      if((childpids[clientConnections-1] = fork()) == 0)
       {
         close(serverSocket);
+        signal(SIGINT, sig_handler_child); //Doesn't apply the handler created for SIGINT
+
         while(1)
         {
           recv(childSocket, buffer, 1024, 0);
@@ -127,7 +149,8 @@ int main()
           {
             printf("Disconnected from %s:%d\n", inet_ntoa(clientAddr.sin_addr), ntohs(clientAddr.sin_port));
             close(childSocket);
-            exit(1);
+            sqlite3_close(db);
+			exit(1);
           }
           else if(startsWith(buffer, "1"))
           {
@@ -136,7 +159,7 @@ int main()
 
             if(createFlight(buffer))
             {
-                    printf("Client %d created flight '%s'!!!\n", currentConnections, buffer);
+                    printf("Client %d created flight '%s'!!!\n", clientConnections, buffer);
                     memset(ans, '\0', sizeof(ans));
                     sprintf(ans, "ok");
 
@@ -156,7 +179,7 @@ int main()
 
             if(cancelFlight(buffer))
             {
-                    printf("Client %d cancelled flight '%s'!!!\n", currentConnections, buffer);
+                    printf("Client %d cancelled flight '%s'!!!\n", clientConnections, buffer);
                     memset(ans, '\0', sizeof(ans));
                     sprintf(ans, "ok");
             }
@@ -191,7 +214,7 @@ int main()
             {
               send(childSocket, buffer, strlen(buffer), 0);
               memset(buffer, '\0', sizeof(buffer));
-              printf("Client %d saw the seats arrangements for the flight '%s'\n", currentConnections, flight);
+              printf("Client %d saw the seats arrangements for the flight '%s'\n", clientConnections, flight);
             }
           }
           else if(startsWith(buffer, "4") || startsWith(buffer, "5"))
@@ -252,8 +275,8 @@ int main()
                   } else
                   {
                           sprintf(ans, "ok");
-                          if(hasToBook) printf("Client %d booked seat %d of flight '%s'\n", currentConnections, seatNumber, flight);
-                          else printf("Client %d cancelled the booking of seat %d, flight '%s'\n", currentConnections, seatNumber, flight);
+                          if(hasToBook) printf("Client %d booked seat %d of flight '%s'\n", clientConnections, seatNumber, flight);
+                          else printf("Client %d cancelled the booking of seat %d, flight '%s'\n", clientConnections, seatNumber, flight);
                   }
                 }
                 else
@@ -307,6 +330,12 @@ int main()
           }
         }
       }
+      else { //is parent
+      	pthread_attr_t attr;
+		pthread_attr_init(&attr);
+		pthread_create(&tids[clientConnections - 1], &attr, wait_child, &clientConnections);
+
+      }
     }
     else
     {
@@ -315,14 +344,16 @@ int main()
     }
   }
 
-  for(int j = 0; j < currentConnections; j++)
+  /*for(int j = 0; j < clientConnections; j++)
   {
-    waitpid(childpids[j], &(status[j]), 0);
-  }
+	waitpid(childpids[j], &(status[j]), 0);
+  }*/
 
   close(childSocket);
   close(serverSocket);
   sqlite3_close(db);
+
+  printf("Server process terminated.\n");
 
   return 0;
 }
@@ -336,7 +367,7 @@ void setupServerSocket()
   if(serverSocket < 0)
   {
     printf("[-]Error in connection.\n");
-    exit(1);
+    exit(0);
   }
   printf("[+]Server Socket is created.\n");
 
@@ -359,7 +390,7 @@ void setupServerSocket()
   if(ret < 0)
   {
     printf("[-]Error in binding.\n");
-    exit(1);
+    exit(0);
   }
   printf("[+]Bind to port %d\n", SERVER_PORT);
 
@@ -478,4 +509,41 @@ int flightExists(char * name) {
 
   	return validateOperation;
 
+}
+
+void sig_handler(int signo)
+{
+  	if (signo == SIGINT){
+   		
+   		/*for(int j = 0; j < clientConnections; j++)
+		{
+			waitpid(childpids[j], &(status[j]), 0);
+		}*/
+		for(int j = 0; j < clientConnections; j++)
+		{
+			pthread_join(tids[j], NULL);
+		}
+
+		close(childSocket);
+		close(serverSocket);
+		sqlite3_close(db);
+
+		printf("\nServer process terminated.\n");
+
+    	exit(1);
+	}
+}
+
+void sig_handler_child(int signo)
+{
+  	if (signo == SIGINT){
+   		
+   		close(childSocket);
+		close(serverSocket);
+		sqlite3_close(db);
+
+		printf("\nChild process %d terminated.\n", clientConnections);
+
+    	exit(1);
+	}
 }

@@ -78,29 +78,6 @@ int main()
 			break;
 		}
 	}
-
-	/*while(1){
-
-	   printf("Client: \t");
-	   fgets(buffer, 1024, stdin);
-	   if ((strlen(buffer) > 0) && (buffer[strlen (buffer) - 1] == '\n'))
-	        buffer[strlen (buffer) - 1] = '\0';
-
-	       send(clientSocket, buffer, strlen(buffer), 0);
-
-	   if(strcmp(buffer, ":exit") == 0){
-	   close(clientSocket);
-	   printf("[-]Disconnected from server.\n");
-	   exit(1);
-	   }
-
-	   if(recv(clientSocket, buffer, 1024, 0) < 0){
-	   printf("[-]Error in receiving data.\n");
-	   }else{
-	   printf("Server: \t%s\n", buffer);
-	   }
-	   }*/
-
 	return 0;
 }
 
@@ -140,8 +117,6 @@ void createFlight()
 		fgets(buffer, 1024, stdin);
 		if ((strlen(buffer) > 0) && (buffer[strlen (buffer) - 1] == '\n'))
 			buffer[strlen (buffer) - 1] = '\0';
-		//scanf("%s", buffer);
-		//while (getchar() != '\n');
 
 		toUpperCase(buffer);
 
@@ -188,9 +163,6 @@ void cancelFlight()
 		if ((strlen(buffer) > 0) && (buffer[strlen (buffer) - 1] == '\n'))
 			buffer[strlen (buffer) - 1] = '\0';
 
-		//scanf("%s", buffer);
-		//while (getchar() != '\n');
-
 		toUpperCase(buffer);
 
 		if(strcmp(buffer, "BACK") == 0) return;
@@ -230,7 +202,7 @@ void seeFlight()
 
 	if(strcmp(buffer, "BACK") == 0)
 			return;
-	
+
 	showSeatsArrangement(buffer);
 }
 
@@ -250,7 +222,7 @@ void bookSeat()
 	strcpy(flight, buffer);
 
 	int arrangement;
-	
+
 	arrangement = showSeatsArrangement(flight);
 
 	if(arrangement == ALL_OCCUPIED)
@@ -261,15 +233,12 @@ void bookSeat()
 			seatNumber = 0;
 			seatNumber = getint("PLEASE ENTER THE NUMBER OF SEAT TO BOOK: \n");
 
-			/*scanf("%d", &seatNumber);
-			   while (getchar() != '\n');*/
-
 			res = book(flight, seatNumber);
 		}
 
 		showSeatsArrangement(flight);
 	}
-	
+
 }
 
 void cancelSeatBooking()
@@ -288,7 +257,7 @@ void cancelSeatBooking()
 	strcpy(flight, buffer);
 
 	int arrangement;
-	
+
 	arrangement = showSeatsArrangement(flight);
 
 	if(arrangement == ALL_FREE)
@@ -298,12 +267,11 @@ void cancelSeatBooking()
 		{
 			seatNumber = 0;
 			seatNumber = getint("PLEASE ENTER THE NUMBER OF SEAT TO CANCEL THE BOOKING: \n");
-
 			res = cancelBooking(flight, seatNumber);
 		}
 		showSeatsArrangement(flight);
 	}
-	
+
 }
 
 void showExistingFlights()
@@ -335,7 +303,7 @@ int showSeatsArrangement(char * flight)
 		printf("%s\n", message);
 	}
 
-	
+
 	bzero(messageAux, sizeof(messageAux));
 
 	sprintf(messageAux, "SEATS ARRANGEMENT FOR THE FLIGHT '%s':\n", flight);
@@ -361,7 +329,7 @@ int showSeatsArrangement(char * flight)
 	if(strcmp(messageAux, message) == 0) return ALL_FREE;
 
 	return 0;
-  	
+
 }
 
 int book(char * flight, int seatNumber)
@@ -463,9 +431,7 @@ void selectFlight() {
 
 		if ((strlen(buffer) > 0) && (buffer[strlen (buffer) - 1] == '\n'))
 			buffer[strlen (buffer) - 1] = '\0';
-		//scanf("%s", buffer);
-		//while (getchar() != '\n');
-
+	
 		toUpperCase(buffer);
 
 		if(strcmp(buffer, "BACK") == 0)

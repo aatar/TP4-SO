@@ -13,6 +13,7 @@ int clientSocket = 0, ret = 0, option = 0, validateOperation = 0;
 struct sockaddr_in serverAddr;
 char buffer[1024];
 char message[1024];
+char messageAux[1024];
 char c;
 
 int main()
@@ -45,6 +46,8 @@ int main()
 				if(!(option >=1 && option <= 6))
 					printf("Incorrect number, it must be an integer between 1 and 6\n");
 			}
+//while (getchar() != '\n');
+//while ((c = getchar()) != '\n' && c != EOF) { }
 		}
 
 		switch(option)
@@ -75,6 +78,29 @@ int main()
 			break;
 		}
 	}
+
+	/*while(1){
+
+	   printf("Client: \t");
+	   fgets(buffer, 1024, stdin);
+	   if ((strlen(buffer) > 0) && (buffer[strlen (buffer) - 1] == '\n'))
+	        buffer[strlen (buffer) - 1] = '\0';
+
+	       send(clientSocket, buffer, strlen(buffer), 0);
+
+	   if(strcmp(buffer, ":exit") == 0){
+	   close(clientSocket);
+	   printf("[-]Disconnected from server.\n");
+	   exit(1);
+	   }
+
+	   if(recv(clientSocket, buffer, 1024, 0) < 0){
+	   printf("[-]Error in receiving data.\n");
+	   }else{
+	   printf("Server: \t%s\n", buffer);
+	   }
+	   }*/
+
 	return 0;
 }
 
@@ -114,6 +140,8 @@ void createFlight()
 		fgets(buffer, 1024, stdin);
 		if ((strlen(buffer) > 0) && (buffer[strlen (buffer) - 1] == '\n'))
 			buffer[strlen (buffer) - 1] = '\0';
+		//scanf("%s", buffer);
+		//while (getchar() != '\n');
 
 		toUpperCase(buffer);
 
@@ -147,7 +175,6 @@ void createFlight()
 
 void cancelFlight()
 {
-	printf("OK, LET'S SEE...\n");
 	showExistingFlights();
 
 	validateOperation = 0;
@@ -160,6 +187,9 @@ void cancelFlight()
 		fgets(buffer, 1024, stdin);
 		if ((strlen(buffer) > 0) && (buffer[strlen (buffer) - 1] == '\n'))
 			buffer[strlen (buffer) - 1] = '\0';
+
+		//scanf("%s", buffer);
+		//while (getchar() != '\n');
 
 		toUpperCase(buffer);
 
@@ -196,17 +226,11 @@ void seeFlight()
 {
 	showExistingFlights();
 
-	printf("PLEASE WRITE THE NAME OF THE FLIGHT TO SEE THE SEATING ARRANGEMENT, OR 'BACK' IF YOU WANT TO GO BACK: \n");
-	memset(buffer, '\0', sizeof(buffer));
-	fgets(buffer, 1024, stdin);
-
-	if ((strlen(buffer) > 0) && (buffer[strlen (buffer) - 1] == '\n'))
-		buffer[strlen (buffer) - 1] = '\0';
-
-	toUpperCase(buffer);
+	selectFlight(); //selects the flight, and it is saved into buffer[]
 
 	if(strcmp(buffer, "BACK") == 0)
-		return;
+			return;
+	
 	showSeatsArrangement(buffer);
 }
 
@@ -218,32 +242,34 @@ void bookSeat()
 
 	showExistingFlights();
 
-	printf("PLEASE WRITE THE NAME OF THE FLIGHT TO SEE, OR 'BACK' IF YOU WANT TO GO BACK: \n");
-	memset(buffer, '\0', sizeof(buffer));
-	fgets(buffer, 1024, stdin);
-
-	if ((strlen(buffer) > 0) && (buffer[strlen (buffer) - 1] == '\n'))
-		buffer[strlen (buffer) - 1] = '\0';
-
-	toUpperCase(buffer);
+	selectFlight(); //selects the flight, and it is saved into buffer[]
 
 	if(strcmp(buffer, "BACK") == 0)
-		return;
+			return;
 
 	strcpy(flight, buffer);
 
-	showSeatsArrangement(flight);
+	int arrangement;
+	
+	arrangement = showSeatsArrangement(flight);
 
-	while(!res)
-	{
-		seatNumber = 0;
-		seatNumber = getint("PLEASE ENTER THE NUMBER OF SEAT TO BOOK: \n");
+	if(arrangement == ALL_OCCUPIED)
+			printf("SORRY, THAT FLIGHT IS FULLY OCCUPIED, YOU CANNOT BOOK ANY SEAT\n");
+	else {
+		while(!res)
+		{
+			seatNumber = 0;
+			seatNumber = getint("PLEASE ENTER THE NUMBER OF SEAT TO BOOK: \n");
 
-		res = book(flight, seatNumber);
+			/*scanf("%d", &seatNumber);
+			   while (getchar() != '\n');*/
+
+			res = book(flight, seatNumber);
+		}
+
+		showSeatsArrangement(flight);
 	}
-
-	showSeatsArrangement(flight);
-
+	
 }
 
 void cancelSeatBooking()
@@ -254,27 +280,30 @@ void cancelSeatBooking()
 
 	showExistingFlights();
 
-	printf("PLEASE WRITE THE NAME OF THE FLIGHT TO SEE, OR 'BACK' IF YOU WANT TO GO BACK: \n");
-	memset(buffer, '\0', sizeof(buffer));
-	fgets(buffer, 1024, stdin);
-	if ((strlen(buffer) > 0) && (buffer[strlen (buffer) - 1] == '\n'))
-		buffer[strlen (buffer) - 1] = '\0';
-
-	toUpperCase(buffer);
+	selectFlight(); //selects the flight, and it is saved into buffer[]
 
 	if(strcmp(buffer, "BACK") == 0)
-		return;
+			return;
 
 	strcpy(flight, buffer);
-	showSeatsArrangement(flight);
-	while(!res)
-	{
-		seatNumber = 0;
-		seatNumber = getint("PLEASE ENTER THE NUMBER OF SEAT TO CANCEL THE BOOKING: \n");
 
-		res = cancelBooking(flight, seatNumber);
+	int arrangement;
+	
+	arrangement = showSeatsArrangement(flight);
+
+	if(arrangement == ALL_FREE)
+			printf("SORRY, THAT FLIGHT IS FULLY FREE, YOU CANNOT CANCEL ANY BOOKING\n");
+	else {
+		while(!res)
+		{
+			seatNumber = 0;
+			seatNumber = getint("PLEASE ENTER THE NUMBER OF SEAT TO CANCEL THE BOOKING: \n");
+
+			res = cancelBooking(flight, seatNumber);
+		}
+		showSeatsArrangement(flight);
 	}
-	showSeatsArrangement(flight);
+	
 }
 
 void showExistingFlights()
@@ -292,7 +321,7 @@ void showExistingFlights()
 	}
 }
 
-void showSeatsArrangement(char * flight)
+int showSeatsArrangement(char * flight)
 {
 	bzero(message, sizeof(message));
 	sprintf(message, "3%s", flight);
@@ -305,6 +334,34 @@ void showSeatsArrangement(char * flight)
 	{
 		printf("%s\n", message);
 	}
+
+	
+	bzero(messageAux, sizeof(messageAux));
+
+	sprintf(messageAux, "SEATS ARRANGEMENT FOR THE FLIGHT '%s':\n", flight);
+
+	strcat(messageAux, "SEAT1 : Occupied\n");
+	strcat(messageAux, "SEAT2 : Occupied\n");
+	strcat(messageAux, "SEAT3 : Occupied\n");
+	strcat(messageAux, "SEAT4 : Occupied\n");
+	strcat(messageAux, "SEAT5 : Occupied\n");
+
+	if(strcmp(messageAux, message) == 0) return ALL_OCCUPIED;
+
+	bzero(messageAux, sizeof(messageAux));
+
+	sprintf(messageAux, "SEATS ARRANGEMENT FOR THE FLIGHT '%s':\n", flight);
+
+	strcat(messageAux, "SEAT1 : Free\n");
+	strcat(messageAux, "SEAT2 : Free\n");
+	strcat(messageAux, "SEAT3 : Free\n");
+	strcat(messageAux, "SEAT4 : Free\n");
+	strcat(messageAux, "SEAT5 : Free\n");
+
+	if(strcmp(messageAux, message) == 0) return ALL_FREE;
+
+	return 0;
+  	
 }
 
 int book(char * flight, int seatNumber)
@@ -391,5 +448,50 @@ void toUpperCase(char* s)
 	{
 		*s = toupper(*s);
 		s++;
+	}
+}
+
+void selectFlight() {
+	validateOperation = 0;
+	while(!validateOperation)
+	{
+
+		printf("PLEASE WRITE THE NAME OF THE FLIGHT TO SEE, OR 'BACK' IF YOU WANT TO GO BACK: \n");
+		memset(buffer, '\0', sizeof(buffer));
+		memset(message, '\0', sizeof(message));
+		fgets(buffer, 1024, stdin);
+
+		if ((strlen(buffer) > 0) && (buffer[strlen (buffer) - 1] == '\n'))
+			buffer[strlen (buffer) - 1] = '\0';
+		//scanf("%s", buffer);
+		//while (getchar() != '\n');
+
+		toUpperCase(buffer);
+
+		if(strcmp(buffer, "BACK") == 0)
+			return;
+
+		strcpy(message, "7");
+		strcat(message, buffer);
+		send(clientSocket, message, strlen(message), 0);
+
+		memset(message, '\0', sizeof(message));
+
+		if(recv(clientSocket, message, 1024, 0) < 0)
+		{
+			printf("[-]Error in receiving data.\n");
+		}
+		else
+		{
+			if(strcmp(message, "ok") == 0)
+			{
+				validateOperation = 1;
+			}
+			else
+			{
+				validateOperation = 0;
+				printf("SORRY, THE FLIGHT YOU WANT TO SEE DOES NOT EXIST, PLEASE TRY WITH ANOTHER ONE\n");
+			}
+		}
 	}
 }

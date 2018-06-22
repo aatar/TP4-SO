@@ -56,10 +56,10 @@ static int callbackSeats(void *NotUsed, int argc, char **argv, char **azColName)
   int i;
   for(i = 0; i<argc; i++)
   {
-    strcat(buffer, azColName[i]);
-    strcat(buffer, " : ");
-    strcat(buffer, argv[i] ? argv[i] : "NULL");
-    strcat(buffer, "\n");
+          strcat(buffer, azColName[i]);
+          strcat(buffer, " : ");
+          strcat(buffer, argv[i] ? argv[i] : "NULL");
+          strcat(buffer, "\n");
   }
   return 0;
 }
@@ -74,7 +74,7 @@ static int checkIfFree(void *NotUsed, int argc, char **argv, char **azColName)
 static int checkIfOccupied(void *NotUsed, int argc, char **argv, char **azColName)
 {
   if(strcmp(argv[0],"Free") != 0)
-    validateOperation = 1;
+          validateOperation = 1;
   printf("\n");
   return 0;
 }
@@ -99,7 +99,7 @@ int main()
   setupServerSocket();
 
   if(!openDatabase())
-    return 0;
+          return 0;
 
   while(1)
   {
@@ -129,17 +129,19 @@ int main()
           {
             removeFirst(buffer);
 
+
             if(createFlight(buffer))
             {
-              printf("Client %d created flight '%s'!!!\n", currentConnections, buffer);
-              memset(ans, '\0', sizeof(ans));
-              sprintf(ans, "ok");
+                    printf("Client %d created flight '%s'!!!\n", currentConnections, buffer);
+                    //printf("A client created a flight\n");
+                    memset(ans, '\0', sizeof(ans));
+                    sprintf(ans, "ok");
 
             }
             else
             {
-              memset(ans, '\0', sizeof(ans));
-              sprintf(ans, "error");
+                    memset(ans, '\0', sizeof(ans));
+                    sprintf(ans, "error");
             }
             send(childSocket, ans, strlen(ans), 0);
             memset(ans, '\0', sizeof(ans));
@@ -151,14 +153,14 @@ int main()
 
             if(cancelFlight(buffer))
             {
-              printf("Client %d cancelled flight '%s'!!!\n", currentConnections, buffer);
-              memset(ans, '\0', sizeof(ans));
-              sprintf(ans, "ok");
+                    printf("Client %d cancelled flight '%s'!!!\n", currentConnections, buffer);
+                    memset(ans, '\0', sizeof(ans));
+                    sprintf(ans, "ok");
             }
             else
             {
-              memset(ans, '\0', sizeof(ans));
-              sprintf(ans, "error");
+                    memset(ans, '\0', sizeof(ans));
+                    sprintf(ans, "error");
             }
             send(childSocket, ans, strlen(ans), 0);
             memset(ans, '\0', sizeof(ans));
@@ -186,6 +188,7 @@ int main()
             {
               send(childSocket, buffer, strlen(buffer), 0);
               memset(buffer, '\0', sizeof(buffer));
+              //printf("Client %d saw the seats arrangements for the flight '%s'!!!:\n", currentConnections, flight);
             }
           }
           else if(startsWith(buffer, "4") || startsWith(buffer, "5"))
@@ -240,14 +243,14 @@ int main()
 
                   if( rc != SQLITE_OK )
                   {
-                    fprintf(stderr, "SQL error: %s\n", zErrMsg);
-                    sqlite3_free(zErrMsg);
-                    sprintf(ans, "ERROR WITH THE DATABASE\n");
+                          fprintf(stderr, "SQL error: %s\n", zErrMsg);
+                          sqlite3_free(zErrMsg);
+                          sprintf(ans, "ERROR WITH THE DATABASE\n");
                   } else
                   {
-                    sprintf(ans, "ok");
-                    if(hasToBook) printf("Client %d booked seat %d of flight '%s'\n", currentConnections, seatNumber, flight);
-                    else printf("Client %d cancelled the booking of seat %d, flight '%s'\n", currentConnections, seatNumber, flight);
+                          sprintf(ans, "ok");
+                          if(hasToBook) printf("Client %d booked seat %d of flight '%s'\n", currentConnections, seatNumber, flight);
+                          else printf("Client %d cancelled the booking of seat %d, flight '%s'\n", currentConnections, seatNumber, flight);
                   }
                 }
                 else
@@ -281,6 +284,29 @@ int main()
               memset(buffer, '\0', sizeof(buffer));
             }
           }
+          else if(startsWith(buffer, "7"))
+          {
+            removeFirst(buffer);
+
+
+            if(flightExists(buffer))
+            {
+                    memset(ans, '\0', sizeof(ans));
+                    sprintf(ans, "ok");
+            }
+            else
+            {
+                    memset(ans, '\0', sizeof(ans));
+                    sprintf(ans, "error");
+            }
+            send(childSocket, ans, strlen(ans), 0);
+            memset(ans, '\0', sizeof(ans));
+          }
+          /*else{
+             printf("Client %d: %s\n", currentConnections, buffer);
+             send(childSocket, buffer, strlen(buffer), 0);
+             bzero(buffer, sizeof(buffer));
+             }*/
         }
       }
     }
@@ -390,8 +416,8 @@ int createFlight(char * name)
   rc = sqlite3_exec(db, sql, checkIfNotExists, 0, &zErrMsg);
   if( rc != SQLITE_OK )
   {
-    fprintf(stderr, "SQL error: %s\n", zErrMsg);
-    sqlite3_free(zErrMsg);
+          fprintf(stderr, "SQL error: %s\n", zErrMsg);
+          sqlite3_free(zErrMsg);
   }
   if(validateOperation)
   {
@@ -407,30 +433,20 @@ int createFlight(char * name)
     else
     {
       return 1;
+      //printf("FLIGHT '%s' CREATED SUCCESSFULLY!!!\n", buffer);
     }
   }
   else
   {
     return 0;
+    //printf("SORRY, THE FLIGHT YOU WROTE ALREADY EXISTS, PLEASE TRY WITH ANOTHER ONE\n");
   }
   return 0;
 }
 
 int cancelFlight(char * name)
 {
-  validateOperation = 0;
-  memset(sql, '\0', sizeof(sql));
-  sprintf(sql, "SELECT * FROM FLIGHT WHERE NAME='%s';", name);
-  /* Execute SQL statement */
-  rc = sqlite3_exec(db, sql, checkIfExists, 0, &zErrMsg);
-
-  if( rc != SQLITE_OK )
-  {
-    fprintf(stderr, "SQL error: %s\n", zErrMsg);
-    sqlite3_free(zErrMsg);
-  }
-
-  if(validateOperation)
+  if(flightExists(name))
   {
     memset(sql, '\0', sizeof(sql));
     sprintf(sql, "DELETE FROM FLIGHT WHERE NAME='%s';", name);
@@ -448,9 +464,22 @@ int cancelFlight(char * name)
       return 1;
     }
   }
-  else
-  {
-    return 0;
-  }
   return 0;
+}
+
+int flightExists(char * name) {
+	validateOperation = 0;
+  	memset(sql, '\0', sizeof(sql));
+  	sprintf(sql, "SELECT * FROM FLIGHT WHERE NAME='%s';", name);
+  	/* Execute SQL statement */
+  	rc = sqlite3_exec(db, sql, checkIfExists, 0, &zErrMsg);
+
+  	if( rc != SQLITE_OK )
+  	{
+      	fprintf(stderr, "SQL error: %s\n", zErrMsg);
+      	sqlite3_free(zErrMsg);
+  	}
+
+  	return validateOperation;
+
 }

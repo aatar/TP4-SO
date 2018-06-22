@@ -145,7 +145,7 @@ int main()
         while(1)
         {
           recv(childSocket, buffer, 1024, 0);
-          if(strcmp(buffer, "exit") == 0)
+          if(startsWith(buffer, "exit"))
           {
             printf("Disconnected from %s:%d\n", inet_ntoa(clientAddr.sin_addr), ntohs(clientAddr.sin_port));
             close(childSocket);
